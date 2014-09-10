@@ -56,46 +56,55 @@ class Game < ActiveRecord::Base
   end
 
   def roll_dice
-    dice = {1 => '⚀',
-            2 => '⚁',
-            3 => '⚂',
-            4 => '⚃',
-            5 => '⚄',
-            6 => '⚅',
-    }
+    dice = {1 => '⚀', 2 => '⚁', 3 => '⚂', 4 => '⚃', 5 => '⚄', 6 => '⚅', }
     (1..self.available_dice).map { rand(1..6) }.sort.map { |face| [face, dice[face]] }
   end
 
   def score(scoring_dice)
     straight = scoring_dice == ['1', '2', '3', '4', '5', '6']
 
-    two_three_of_a_kind = (scoring_dice[0..2] && scoring_dice[0..2].length == 3 && scoring_dice[1..2].all? { |scoring_die| scoring_die == scoring_dice[0] }) &&
-      (scoring_dice[3..5] && scoring_dice[3..5].length == 3 && scoring_dice[4..5].all? { |scoring_die| scoring_die == scoring_dice[3] })
+    def how_many_in_a_row(scoring_dice, size, iteration)
+      first_numb = iteration
+      second_numb = iteration + 1
+      final_numb = (first_numb - 1) + size
+      (scoring_dice[first_numb..final_numb] && scoring_dice[first_numb..final_numb].length == size && scoring_dice[second_numb..final_numb].all? { |scoring_die| scoring_die == scoring_dice[first_numb] })
+    end
+    def of_a_kind(scoring_dice, size)
+        count = 0
+        range_count = 2
+        (0..(size)).to_a.each do |i|
+          # puts i
+          #if how_many_in_a_row(scoring_dice, size, i)
+          #  return true
+          #end
+          range_count = i
+        end
 
-    three_pairs = scoring_dice[0] == scoring_dice[1] &&
+        while count < size
+          if how_many_in_a_row(scoring_dice, size, count)
+            return true
+          end
+          count += 1
+        end
+
+        puts "range count: #{range_count}\n count: #{count}"
+    end
+
+    two_three_of_a_kind =
+        how_many_in_a_row(scoring_dice, 3, 0) &&
+        how_many_in_a_row(scoring_dice, 3, 3)
+
+    three_pairs =
+    scoring_dice[0] == scoring_dice[1] &&
       scoring_dice[2] == scoring_dice[3] &&
       scoring_dice[4] == scoring_dice[5] &&
       scoring_dice.length == 6 &&
       !scoring_dice.all? { |scoring_die| scoring_dice[0] == scoring_die }
 
-    three_of_a_kind =
-      (scoring_dice[0..2] && scoring_dice[0..2].length == 3 && scoring_dice[1..2].all? { |scoring_die| scoring_die == scoring_dice[0] }) ||
-        (scoring_dice[1..3] && scoring_dice[1..3].length == 3 && scoring_dice[2..3].all? { |scoring_die| scoring_die == scoring_dice[1] }) ||
-        (scoring_dice[2..4] && scoring_dice[2..4].length == 3 && scoring_dice[3..4].all? { |scoring_die| scoring_die == scoring_dice[2] }) ||
-        (scoring_dice[3..5] && scoring_dice[3..5].length == 3 && scoring_dice[4..5].all? { |scoring_die| scoring_die == scoring_dice[3] })
-
-    four_of_a_kind =
-      (scoring_dice[0..3] && scoring_dice[0..3].length == 4 && scoring_dice[1..3].all? { |scoring_die| scoring_die == scoring_dice[0] }) ||
-        (scoring_dice[1..4] && scoring_dice[1..4].length == 4 && scoring_dice[2..4].all? { |scoring_die| scoring_die == scoring_dice[1] }) ||
-        (scoring_dice[2..5] && scoring_dice[2..5].length == 4 && scoring_dice[3..5].all? { |scoring_die| scoring_die == scoring_dice[2] })
-
-    five_of_a_kind =
-      (scoring_dice[0..4] && scoring_dice[0..4].length == 5 && scoring_dice[1..4].all? { |scoring_die| scoring_die == scoring_dice[0] }) ||
-        (scoring_dice[1..5] && scoring_dice[1..5].length == 5 && scoring_dice[2..5].all? { |scoring_die| scoring_die == scoring_dice[1] })
-
-    six_of_a_kind =
-      scoring_dice.length == 6 && scoring_dice[1..5].all? { |scoring_die| scoring_die == scoring_dice[0] }
-
+    three_of_a_kind = of_a_kind(scoring_dice, 3)
+    four_of_a_kind = of_a_kind(scoring_dice, 4)
+    five_of_a_kind = of_a_kind(scoring_dice, 5)
+    six_of_a_kind = how_many_in_a_row(scoring_dice, 6, 0)
     tally_score = 0
 
     if straight
